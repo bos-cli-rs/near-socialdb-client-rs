@@ -2,6 +2,8 @@ use std::str::FromStr;
 
 use color_eyre::eyre::WrapErr;
 
+pub mod types;
+
 const ONE_NEAR: u128 = 10u128.pow(24);
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd)]
