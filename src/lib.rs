@@ -176,7 +176,7 @@ pub async fn get_deposit(
         )? {
         if is_write_permission_granted_to_public_key || is_write_permission_granted_to_signer {
             if required_deposit.is_zero() {
-                near_token::NearToken::from_str("0 NEAR").unwrap()
+                near_token::NearToken::from_near(0)
             } else if is_signer_access_key_full_access {
                 required_deposit
             } else {
