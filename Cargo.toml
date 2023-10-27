@@ -20,4 +20,4 @@ near-primitives = "0.17.0"
 near-jsonrpc-client = "0.6.0"
 near-jsonrpc-primitives = "0.17.0"
 
-interactive-clap = "0.2.6"
+near-token = "0.1.0"
