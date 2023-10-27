@@ -4,101 +4,6 @@ use color_eyre::eyre::WrapErr;
 
 pub mod types;
 
-const ONE_NEAR: u128 = 10u128.pow(24);
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd)]
-pub struct NearBalance {
-    pub yoctonear_amount: u128,
-}
-
-impl NearBalance {
-    pub fn from_yoctonear(yoctonear_amount: u128) -> Self {
-        Self { yoctonear_amount }
-    }
-
-    pub fn to_yoctonear(&self) -> u128 {
-        self.yoctonear_amount
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self == &Self::from_str("0 NEAR").unwrap()
-    }
-}
-
-impl std::fmt::Display for NearBalance {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.yoctonear_amount == 0 {
-            write!(f, "0 NEAR")
-        } else if self.yoctonear_amount % ONE_NEAR == 0 {
-            write!(f, "{} NEAR", self.yoctonear_amount / ONE_NEAR,)
-        } else {
-            write!(
-                f,
-                "{}.{} NEAR",
-                self.yoctonear_amount / ONE_NEAR,
-                format!("{:0>24}", (self.yoctonear_amount % ONE_NEAR)).trim_end_matches('0')
-            )
-        }
-    }
-}
-
-impl std::str::FromStr for NearBalance {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let num = s.trim().trim_end_matches(char::is_alphabetic).trim();
-        let currency = s.trim().trim_start_matches(num).trim().to_uppercase();
-        let yoctonear_amount = match currency.as_str() {
-            "N" | "NEAR" => {
-                let res_split: Vec<&str> = num.split('.').collect();
-                match res_split.len() {
-                    2 => {
-                        let num_int_yocto = res_split[0]
-                            .parse::<u128>()
-                            .map_err(|err| format!("Near Balance: {}", err))?
-                            .checked_mul(10u128.pow(24))
-                            .ok_or("Near Balance: underflow or overflow happens")?;
-                        let len_fract = res_split[1].len() as u32;
-                        let num_fract_yocto = if len_fract <= 24 {
-                            res_split[1]
-                                .parse::<u128>()
-                                .map_err(|err| format!("Near Balance: {}", err))?
-                                .checked_mul(10u128.pow(24 - res_split[1].len() as u32))
-                                .ok_or("Near Balance: underflow or overflow happens")?
-                        } else {
-                            return Err(
-                                "Near Balance: too large fractional part of a number".to_string()
-                            );
-                        };
-                        num_int_yocto
-                            .checked_add(num_fract_yocto)
-                            .ok_or("Near Balance: underflow or overflow happens")?
-                    }
-                    1 => {
-                        if res_split[0].starts_with('0') && res_split[0] != "0" {
-                            return Err("Near Balance: incorrect number entered".to_string());
-                        };
-                        res_split[0]
-                            .parse::<u128>()
-                            .map_err(|err| format!("Near Balance: {}", err))?
-                            .checked_mul(10u128.pow(24))
-                            .ok_or("Near Balance: underflow or overflow happens")?
-                    }
-                    _ => return Err("Near Balance: incorrect number entered".to_string()),
-                }
-            }
-            "YN" | "YNEAR" | "YOCTONEAR" | "YOCTON" => num
-                .parse::<u128>()
-                .map_err(|err| format!("Near Balance: {}", err))?,
-            _ => return Err("Near Balance: incorrect currency value entered".to_string()),
-        };
-        Ok(NearBalance { yoctonear_amount })
-    }
-}
-
-impl interactive_clap::ToCli for NearBalance {
-    type CliVariant = NearBalance;
-}
-
 use serde::de::{Deserialize, Deserializer};
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -238,8 +143,8 @@ pub async fn get_deposit(
     account_id: &near_primitives::types::AccountId,
     key: &str,
     near_social_account_id: &near_primitives::types::AccountId,
-    required_deposit: NearBalance,
-) -> color_eyre::eyre::Result<NearBalance> {
+    required_deposit: near_token::NearToken,
+) -> color_eyre::eyre::Result<near_token::NearToken> {
     let signer_access_key_permission =
         get_access_key_permission(json_rpc_client, signer_account_id, signer_public_key).await?;
 
@@ -271,7 +176,7 @@ pub async fn get_deposit(
         )? {
         if is_write_permission_granted_to_public_key || is_write_permission_granted_to_signer {
             if required_deposit.is_zero() {
-                NearBalance::from_str("0 NEAR").unwrap()
+                near_token::NearToken::from_str("0 NEAR").unwrap()
             } else if is_signer_access_key_full_access {
                 required_deposit
             } else {
@@ -280,7 +185,7 @@ pub async fn get_deposit(
         } else if signer_account_id == account_id {
             if is_signer_access_key_full_access {
                 if required_deposit.is_zero() {
-                    NearBalance::from_str("1 yoctoNEAR").unwrap()
+                    near_token::NearToken::from_str("1 yoctoNEAR").unwrap()
                 } else {
                     required_deposit
                 }
@@ -304,7 +209,7 @@ pub async fn required_deposit(
     account_id: &near_primitives::types::AccountId,
     data: &serde_json::Value,
     prev_data: Option<&serde_json::Value>,
-) -> color_eyre::eyre::Result<NearBalance> {
+) -> color_eyre::eyre::Result<near_token::NearToken> {
     const STORAGE_COST_PER_BYTE: i128 = 10i128.pow(19);
     const MIN_STORAGE_BALANCE: u128 = STORAGE_COST_PER_BYTE as u128 * 2000;
     const INITIAL_ACCOUNT_STORAGE_BALANCE: i128 = STORAGE_COST_PER_BYTE * 500;
@@ -357,7 +262,7 @@ pub async fn required_deposit(
     )
     .unwrap_or(0)
     .saturating_sub(available_storage);
-    Ok(NearBalance::from_yoctonear(std::cmp::max(
+    Ok(near_token::NearToken::from_yoctonear(std::cmp::max(
         estimated_storage_balance,
         min_storage_balance,
     )))
