@@ -185,7 +185,7 @@ pub async fn get_deposit(
         } else if signer_account_id == account_id {
             if is_signer_access_key_full_access {
                 if required_deposit.is_zero() {
-                    near_token::NearToken::from_str("1 yoctoNEAR").unwrap()
+                    near_token::NearToken::from_yoctonear(1)
                 } else {
                     required_deposit
                 }
