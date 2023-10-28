@@ -1,6 +1,6 @@
 [package]
 name = "near-socialdb-client"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["FroVolod <frol_off@meta.ua>", "frol <frolvlad@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -20,4 +20,4 @@ near-primitives = "0.17.0"
 near-jsonrpc-client = "0.6.0"
 near-jsonrpc-primitives = "0.17.0"
 
-near-token = "0.1.0"
+near-token = "0.2.0"

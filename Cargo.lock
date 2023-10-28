@@ -1539,7 +1539,7 @@ dependencies = [
 
 [[package]]
 name = "near-socialdb-client"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "color-eyre",
  "near-crypto",
@@ -1560,9 +1560,9 @@ checksum = "6540152fba5e96fe5d575b79e8cd244cf2add747bb01362426bdc069bc3a23bc"
 
 [[package]]
 name = "near-token"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "047c020236681e69b4075b2f69a405109a605934d224a63588f89c8db5519259"
+checksum = "7b68f3f8a2409f72b43efdbeff8e820b81e70824c49fee8572979d789d1683fb"
 
 [[package]]
 name = "near-vm-errors"
