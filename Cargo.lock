@@ -2243,7 +2243,7 @@ dependencies = [
 
 [[package]]
 name = "near-socialdb-client"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "color-eyre",
  "near-crypto",
