@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.3.0...v0.3.1) - 2024-06-19
+
+### Other
+- Updated near-deps to 0.23.0 ([#9](https://github.com/bos-cli-rs/near-socialdb-client-rs/pull/9))
+
 ## [0.3.0](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.2.2...v0.3.0) - 2024-06-10
 
 ### Other
