@@ -331,3 +331,65 @@ pub fn social_db_data_from_key(full_key: &str, data_to_set: &mut serde_json::Val
         *data_to_set = serde_json::json!({ full_key: data_to_set });
     }
 }
+
+#[cfg(all(test))]
+mod tests {
+    use serde_json::json;
+
+    use crate::estimate_data_size;
+
+    #[test]
+    pub fn test_required_deposit_no_change() {
+        let new_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        let prev_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+    }
+
+    #[test]
+    pub fn test_required_deposit_value_change_same_length() {
+        let new_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        let prev_data: serde_json::Value = json!({
+            "helloa": "abcdefghi"
+        });
+        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+    }
+
+    #[test]
+    pub fn test_required_deposit_value_one_more_character() {
+        let new_data: serde_json::Value = json!({
+            "helloa": "world....."
+        });
+        let prev_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 1);
+    }
+
+    #[test]
+    pub fn test_required_deposit_value_one_less_character() {
+        let new_data: serde_json::Value = json!({
+            "helloa": "world..."
+        });
+        let prev_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), -1);
+    }
+
+    #[test]
+    pub fn test_required_deposit_different_key_same_value() {
+        let new_data: serde_json::Value = json!({
+            "helloa": "world...."
+        });
+        let prev_data: serde_json::Value = json!({
+            "hellob": "world...."
+        });
+        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+    }
+}
