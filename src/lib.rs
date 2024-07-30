@@ -334,7 +334,7 @@ pub fn social_db_data_from_key(full_key: &str, data_to_set: &mut serde_json::Val
     }
 }
 
-#[cfg(all(test))]
+#[cfg(test)]
 mod tests {
     use httpmock::prelude::*;
     use near_jsonrpc_client::JsonRpcClient;
