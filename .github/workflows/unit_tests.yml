@@ -12,16 +12,11 @@ env:
 jobs:
   codestyle:
     name: Unit tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: rustfmt
+        uses: Swatinem/rust-cache@v1
       - name: Unit tests
         run: cargo test
