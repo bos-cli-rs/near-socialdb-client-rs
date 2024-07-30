@@ -1,4 +1,4 @@
-name: Code Style
+name: Unit tests
 
 on:
   push:
@@ -11,14 +11,12 @@ env:
 
 jobs:
   codestyle:
-    name: Code Style (fmt + clippy)
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Rust
         uses: Swatinem/rust-cache@v1
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Check lints (cargo clippy)
-        run: cargo clippy -- -D warnings
+      - name: Unit tests
+        run: cargo test
