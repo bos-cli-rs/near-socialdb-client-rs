@@ -334,62 +334,167 @@ pub fn social_db_data_from_key(full_key: &str, data_to_set: &mut serde_json::Val
 
 #[cfg(all(test))]
 mod tests {
-    use serde_json::json;
+    use httpmock::prelude::*;
+    use near_jsonrpc_client::JsonRpcClient;
+    use near_primitives::types::AccountId;
+    use near_token::NearToken;
+    use serde_json::{json, Value};
 
-    use crate::estimate_data_size;
+    use crate::get_deposit;
 
-    #[test]
-    pub fn test_required_deposit_no_change() {
-        let new_data: serde_json::Value = json!({
-            "helloa": "world...."
+    fn mock_rpc(write_permission: bool) -> String {
+        let server = MockServer::start();
+
+        server.mock(|when, then| {
+            when.body_contains("view_access_key");
+            then.json_body(json!({
+              "jsonrpc": "2.0",
+              "result": {
+                "nonce": 85,
+                "permission": {
+                  "FunctionCall": {
+                    "allowance": "18501534631167209000000000",
+                    "receiver_id": "devhub.near",
+                    "method_names": ["set"]
+                  }
+                },
+                "block_height": 19884918,
+                "block_hash": "GGJQ8yjmo7aEoj8ZpAhGehnq9BSWFx4xswHYzDwwAP2n"
+              },
+              "id": "dontcare"
+            }));
         });
-        let prev_data: serde_json::Value = json!({
-            "helloa": "world...."
+
+        server.mock(|when, then| {
+            when.body_contains("is_write_permission_granted");
+            let write_permission_json_str =
+                serde_json::to_string(&json!(write_permission)).unwrap();
+            let binary_write_permission = write_permission_json_str.as_bytes().to_vec();
+            then.json_body(json!({
+              "jsonrpc": "2.0",
+              "result": {
+                "result": binary_write_permission,
+                "logs": [],
+                "block_height": 17817336,
+                "block_hash": "4qkA4sUUG8opjH5Q9bL5mWJTnfR4ech879Db1BZXbx6P"
+              },
+              "id": "dontcare"
+            }));
         });
-        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+
+        server.mock(|when, then| {
+            when.matches(|req| {
+                if let Some(body_bytes) = &req.body {
+                    // Convert body to string
+                    let body_str = String::from_utf8_lossy(body_bytes);
+                    if let Ok(json_body) = serde_json::from_str::<Value>(&body_str) {
+                        println!(
+                            "No mock for request: {}",
+                            serde_json::to_string_pretty(&json_body).unwrap()
+                        );
+                    } else {
+                        println!("Failed to parse JSON body");
+                    }
+                }
+                true
+            });
+            then.status(500);
+        });
+        return server.url("/");
     }
 
-    #[test]
-    pub fn test_required_deposit_value_change_same_length() {
-        let new_data: serde_json::Value = json!({
-            "helloa": "world...."
-        });
-        let prev_data: serde_json::Value = json!({
-            "helloa": "abcdefghi"
-        });
-        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+    #[tokio::test]
+    pub async fn test_get_deposit_own_account_explicit_write_permission() {
+        let key_pair = near_crypto::SecretKey::from_random(near_crypto::KeyType::ED25519);
+
+        let server_url = mock_rpc(true);
+        let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
+
+        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let public_key = key_pair.public_key();
+
+        let deposit = get_deposit(
+            &json_rpc_client,
+            &signer_account_id,
+            &public_key,
+            &signer_account_id,
+            &"devhub.near/widget/app",
+            &signer_account_id,
+            NearToken::from_near(0),
+        )
+        .await;
+
+        match deposit {
+            Ok(deposit_value) => {
+                assert_eq!(NearToken::from_near(0), deposit_value);
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+                panic!("get_deposit failed");
+            }
+        }
     }
 
-    #[test]
-    pub fn test_required_deposit_value_one_more_character() {
-        let new_data: serde_json::Value = json!({
-            "helloa": "world....."
-        });
-        let prev_data: serde_json::Value = json!({
-            "helloa": "world...."
-        });
-        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 1);
+    #[tokio::test]
+    pub async fn test_get_deposit_own_account_no_explicit_write_permission() {
+        let key_pair = near_crypto::SecretKey::from_random(near_crypto::KeyType::ED25519);
+
+        let server_url = mock_rpc(false);
+        let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
+
+        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let public_key = key_pair.public_key();
+
+        let deposit = get_deposit(
+            &json_rpc_client,
+            &signer_account_id,
+            &public_key,
+            &signer_account_id,
+            &"devhub.near/widget/app",
+            &signer_account_id,
+            NearToken::from_near(0),
+        )
+        .await;
+
+        match deposit {
+            Ok(deposit_value) => {
+                assert_eq!(NearToken::from_near(0), deposit_value);
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+                panic!("get_deposit should not fail when using a public key belonging to the target account, even without explicit write permission. Error Message:\n{}", e.to_string());
+            }
+        }
     }
 
-    #[test]
-    pub fn test_required_deposit_value_one_less_character() {
-        let new_data: serde_json::Value = json!({
-            "helloa": "world..."
-        });
-        let prev_data: serde_json::Value = json!({
-            "helloa": "world...."
-        });
-        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), -1);
-    }
+    #[tokio::test]
+    pub async fn test_get_deposit_other_account_no_explicit_write_permission() {
+        let key_pair = near_crypto::SecretKey::from_random(near_crypto::KeyType::ED25519);
 
-    #[test]
-    pub fn test_required_deposit_different_key_same_value() {
-        let new_data: serde_json::Value = json!({
-            "helloa": "world...."
-        });
-        let prev_data: serde_json::Value = json!({
-            "hellob": "world...."
-        });
-        assert_eq!(estimate_data_size(&new_data, Some(&prev_data)), 0);
+        let server_url = mock_rpc(false);
+        let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
+
+        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let public_key = key_pair.public_key();
+
+        let deposit = get_deposit(
+            &json_rpc_client,
+            &signer_account_id,
+            &public_key,
+            &signer_account_id,
+            &"devhub.near/widget/app",
+            &signer_account_id,
+            NearToken::from_near(0),
+        )
+        .await;
+
+        match deposit {
+            Ok(_deposit_value) => {
+                panic!("get_deposit should fail when using a public key belonging to a different account without explicit write permission");
+            }
+            Err(e) => {
+                assert_eq!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key", e.to_string());
+            }
+        }
     }
 }

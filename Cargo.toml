@@ -21,3 +21,7 @@ near-jsonrpc-client = "0.10"
 near-jsonrpc-primitives = ">0.22,<0.24"
 
 near-token = "0.2.0"
+
+[dev-dependencies]
+httpmock = "0.7.0"
+tokio = { version = "1", features = ["full"] }
