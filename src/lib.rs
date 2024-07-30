@@ -187,6 +187,8 @@ pub async fn get_deposit(
                 } else {
                     required_deposit
                 }
+            } else if required_deposit.is_zero() {
+                required_deposit
             } else {
                 color_eyre::eyre::bail!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key")
             }
