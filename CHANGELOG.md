@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.3.1...v0.3.2) - 2024-07-30
+
+### Fixed
+- Allow function access keys to be used without explicit write permission (this reflects the SocialDB contract implementation) ([#11](https://github.com/bos-cli-rs/near-socialdb-client-rs/pull/11))
+
 ## [0.3.1](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.3.0...v0.3.1) - 2024-06-19
 
 ### Other
