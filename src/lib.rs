@@ -354,7 +354,7 @@ mod tests {
                 "permission": {
                   "FunctionCall": {
                     "allowance": "18501534631167209000000000",
-                    "receiver_id": "devhub.near",
+                    "receiver_id": "social.near",
                     "method_names": ["set"]
                   }
                 },
@@ -417,9 +417,9 @@ mod tests {
             &json_rpc_client,
             &signer_account_id,
             &public_key,
-            &signer_account_id,
+            &"devhub.near".parse().unwrap(),
             &"devhub.near/widget/app",
-            &signer_account_id,
+            &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
         .await;
@@ -449,9 +449,9 @@ mod tests {
             &json_rpc_client,
             &signer_account_id,
             &public_key,
-            &signer_account_id,
+            &"devhub.near".parse().unwrap(),
             &"devhub.near/widget/app",
-            &signer_account_id,
+            &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
         .await;
@@ -474,16 +474,16 @@ mod tests {
         let server_url = mock_rpc(false);
         let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
 
-        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let signer_account_id: AccountId = "notdevhub.near".parse().unwrap();
         let public_key = key_pair.public_key();
 
         let deposit = get_deposit(
             &json_rpc_client,
             &signer_account_id,
             &public_key,
-            &signer_account_id,
+            &"devhub.near".parse().unwrap(),
             &"devhub.near/widget/app",
-            &signer_account_id,
+            &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
         .await;
@@ -491,6 +491,71 @@ mod tests {
         match deposit {
             Ok(_deposit_value) => {
                 panic!("get_deposit should fail when using a public key belonging to a different account without explicit write permission");
+            }
+            Err(e) => {
+                assert_eq!(
+                    "ERROR: the signer is not allowed to modify the components of this account_id.",
+                    e.to_string()
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    pub async fn test_get_deposit_same_account_function_access_key_with_required_deposit() {
+        let key_pair = near_crypto::SecretKey::from_random(near_crypto::KeyType::ED25519);
+
+        let server_url = mock_rpc(false);
+        let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
+
+        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let public_key = key_pair.public_key();
+
+        let deposit = get_deposit(
+            &json_rpc_client,
+            &signer_account_id,
+            &public_key,
+            &"devhub.near".parse().unwrap(),
+            &"devhub.near/widget/app",
+            &"social.near".parse().unwrap(),
+            NearToken::from_near(1),
+        )
+        .await;
+
+        match deposit {
+            Ok(_deposit_value) => {
+                panic!("get_deposit should fail when using a public key belonging for a function access key from the owner account when there is a required deposit");
+            }
+            Err(e) => {
+                assert_eq!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key", e.to_string());
+            }
+        }
+    }
+
+    #[tokio::test]
+    pub async fn test_get_deposit_write_permission_function_access_key_with_required_deposit() {
+        let key_pair = near_crypto::SecretKey::from_random(near_crypto::KeyType::ED25519);
+
+        let server_url = mock_rpc(true);
+        let json_rpc_client: JsonRpcClient = JsonRpcClient::connect(&server_url);
+
+        let signer_account_id: AccountId = "devhub.near".parse().unwrap();
+        let public_key = key_pair.public_key();
+
+        let deposit = get_deposit(
+            &json_rpc_client,
+            &signer_account_id,
+            &public_key,
+            &"devhub.near".parse().unwrap(),
+            &"devhub.near/widget/app",
+            &"social.near".parse().unwrap(),
+            NearToken::from_near(1),
+        )
+        .await;
+
+        match deposit {
+            Ok(_deposit_value) => {
+                panic!("get_deposit should fail when using a public key with write permission when there is a required deposit");
             }
             Err(e) => {
                 assert_eq!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key", e.to_string());
