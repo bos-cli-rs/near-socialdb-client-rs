@@ -2013,9 +2013,9 @@ dependencies = [
 
 [[package]]
 name = "near-jsonrpc-client"
-version = "0.10.2"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b75b260d9aef022b50fb140c473a47c6acf8afcc1484c6e546a1e77b33cfb258"
+checksum = "0e60cee17ae276bfa0d463032231902d866b58ff93f9ff4ff6cd0fdd9efcb9c4"
 dependencies = [
  "borsh",
  "lazy_static",
