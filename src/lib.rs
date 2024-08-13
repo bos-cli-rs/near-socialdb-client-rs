@@ -402,7 +402,7 @@ mod tests {
             });
             then.status(500);
         });
-        return server.url("/");
+        server.url("/")
     }
 
     #[tokio::test]
@@ -420,7 +420,7 @@ mod tests {
             &signer_account_id,
             &public_key,
             &"devhub.near".parse().unwrap(),
-            &"devhub.near/widget/app",
+            "devhub.near/widget/app",
             &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
@@ -452,7 +452,7 @@ mod tests {
             &signer_account_id,
             &public_key,
             &"devhub.near".parse().unwrap(),
-            &"devhub.near/widget/app",
+            "devhub.near/widget/app",
             &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
@@ -464,7 +464,7 @@ mod tests {
             }
             Err(e) => {
                 println!("Error: {:?}", e);
-                panic!("get_deposit should not fail when using a public key belonging to the target account, even without explicit write permission. Error Message:\n{}", e.to_string());
+                panic!("get_deposit should not fail when using a public key belonging to the target account, even without explicit write permission. Error Message:\n{}", e);
             }
         }
     }
@@ -484,7 +484,7 @@ mod tests {
             &signer_account_id,
             &public_key,
             &"devhub.near".parse().unwrap(),
-            &"devhub.near/widget/app",
+            "devhub.near/widget/app",
             &"social.near".parse().unwrap(),
             NearToken::from_near(0),
         )
@@ -518,7 +518,7 @@ mod tests {
             &signer_account_id,
             &public_key,
             &"devhub.near".parse().unwrap(),
-            &"devhub.near/widget/app",
+            "devhub.near/widget/app",
             &"social.near".parse().unwrap(),
             NearToken::from_near(1),
         )
@@ -549,7 +549,7 @@ mod tests {
             &signer_account_id,
             &public_key,
             &"devhub.near".parse().unwrap(),
-            &"devhub.near/widget/app",
+            "devhub.near/widget/app",
             &"social.near".parse().unwrap(),
             NearToken::from_near(1),
         )
