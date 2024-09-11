@@ -1,6 +1,6 @@
 [package]
 name = "near-socialdb-client"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
 authors = ["FroVolod <frol_off@meta.ua>", "frol <frolvlad@gmail.com>"]
 license = "MIT OR Apache-2.0"
