@@ -1,4 +1,4 @@
-use color_eyre::eyre::WrapErr;
+use eyre::WrapErr;
 
 pub mod types;
 
@@ -12,7 +12,7 @@ pub struct StorageBalance {
     pub total: u128,
 }
 
-fn parse_u128_string<'de, D>(deserializer: D) -> color_eyre::eyre::Result<u128, D::Error>
+fn parse_u128_string<'de, D>(deserializer: D) -> eyre::Result<u128, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -53,7 +53,7 @@ pub async fn is_write_permission_granted<P: Into<PermissionKey>>(
     near_social_account_id: &near_primitives::types::AccountId,
     permission_key: P,
     key: String,
-) -> color_eyre::eyre::Result<bool> {
+) -> eyre::Result<bool> {
     let function_args = serde_json::to_string(&IsWritePermissionGrantedInputArgs {
         key,
         permission_key: permission_key.into(),
@@ -75,7 +75,7 @@ pub async fn is_write_permission_granted<P: Into<PermissionKey>>(
         near_jsonrpc_primitives::types::query::QueryResponseKind::CallResult(call_result) => {
             call_result
         }
-        _ => color_eyre::eyre::bail!("ERROR: unexpected response type from JSON RPC client"),
+        _ => eyre::bail!("ERROR: unexpected response type from JSON RPC client"),
     };
 
     let serde_call_result: serde_json::Value = serde_json::from_slice(&call_result.result)
@@ -92,7 +92,7 @@ pub async fn is_write_permission_granted<P: Into<PermissionKey>>(
 pub fn is_signer_access_key_function_call_access_can_call_set_on_social_db_account(
     near_social_account_id: &near_primitives::types::AccountId,
     access_key_permission: &near_primitives::views::AccessKeyPermissionView,
-) -> color_eyre::eyre::Result<bool> {
+) -> eyre::Result<bool> {
     if let near_primitives::views::AccessKeyPermissionView::FunctionCall {
         allowance: _,
         receiver_id,
@@ -110,7 +110,7 @@ pub async fn get_access_key_permission(
     json_rpc_client: &near_jsonrpc_client::JsonRpcClient,
     account_id: &near_primitives::types::AccountId,
     public_key: &near_crypto::PublicKey,
-) -> color_eyre::eyre::Result<near_primitives::views::AccessKeyPermissionView> {
+) -> eyre::Result<near_primitives::views::AccessKeyPermissionView> {
     let permission = match json_rpc_client
         .call(near_jsonrpc_client::methods::query::RpcQueryRequest {
             block_reference: near_primitives::types::Finality::Final.into(),
@@ -126,7 +126,7 @@ pub async fn get_access_key_permission(
             near_jsonrpc_primitives::types::query::QueryResponseKind::AccessKey(
                 access_key_view,
             ) => access_key_view.permission,
-            _ => color_eyre::eyre::bail!(
+            _ => eyre::bail!(
                 "Internal error: Received unexpected query kind in response to a View Access Key query call",
             )
         };
@@ -142,7 +142,7 @@ pub async fn get_deposit(
     key: &str,
     near_social_account_id: &near_primitives::types::AccountId,
     required_deposit: near_token::NearToken,
-) -> color_eyre::eyre::Result<near_token::NearToken> {
+) -> eyre::Result<near_token::NearToken> {
     let signer_access_key_permission =
         get_access_key_permission(json_rpc_client, signer_account_id, signer_public_key).await?;
 
@@ -178,7 +178,7 @@ pub async fn get_deposit(
             } else if is_signer_access_key_full_access {
                 required_deposit
             } else {
-                color_eyre::eyre::bail!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key")
+                eyre::bail!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key")
             }
         } else if signer_account_id == account_id {
             if is_signer_access_key_full_access {
@@ -190,15 +190,15 @@ pub async fn get_deposit(
             } else if required_deposit.is_zero() {
                 required_deposit
             } else {
-                color_eyre::eyre::bail!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key")
+                eyre::bail!("ERROR: Social DB requires more storage deposit, but we cannot cover it when signing transaction with a Function Call only access key")
             }
         } else {
-            color_eyre::eyre::bail!(
+            eyre::bail!(
                 "ERROR: the signer is not allowed to modify the components of this account_id."
             )
         }
     } else {
-        color_eyre::eyre::bail!("ERROR: signer access key cannot be used to sign a transaction to update components in Social DB.")
+        eyre::bail!("ERROR: signer access key cannot be used to sign a transaction to update components in Social DB.")
     };
     Ok(deposit)
 }
@@ -209,7 +209,7 @@ pub async fn required_deposit(
     account_id: &near_primitives::types::AccountId,
     data: &serde_json::Value,
     prev_data: Option<&serde_json::Value>,
-) -> color_eyre::eyre::Result<near_token::NearToken> {
+) -> eyre::Result<near_token::NearToken> {
     const STORAGE_COST_PER_BYTE: i128 = 10i128.pow(19);
     const MIN_STORAGE_BALANCE: u128 = STORAGE_COST_PER_BYTE as u128 * 2000;
     const INITIAL_ACCOUNT_STORAGE_BALANCE: i128 = STORAGE_COST_PER_BYTE * 500;
@@ -237,10 +237,10 @@ pub async fn required_deposit(
         near_jsonrpc_primitives::types::query::QueryResponseKind::CallResult(call_result) => {
             call_result
         }
-        _ => color_eyre::eyre::bail!("ERROR: unexpected response type from JSON RPC client"),
+        _ => eyre::bail!("ERROR: unexpected response type from JSON RPC client"),
     };
 
-    let storage_balance_result: color_eyre::eyre::Result<StorageBalance> =
+    let storage_balance_result: eyre::Result<StorageBalance> =
         serde_json::from_slice(&call_result_storage_balance.result).wrap_err_with(|| {
             format!(
                 "Failed to parse view-function call return value: {}",
