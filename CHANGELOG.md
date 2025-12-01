@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.13.0...v0.14.0) - 2025-12-01
+
+### Other
+
+- [**breaking**] updated deps to nearcore 2.10 release ([#37](https://github.com/bos-cli-rs/near-socialdb-client-rs/pull/37))
+
 ## [0.11.0](https://github.com/bos-cli-rs/near-socialdb-client-rs/compare/v0.10.1...v0.11.0) - 2025-05-09
 
 ### Other
